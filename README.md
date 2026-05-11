@@ -27,12 +27,15 @@ The application is completely privacy-respecting as all text processing and spee
 7. Enable **Show in sidebar** for easy access.
 
 ### Method 2: Custom Repository
-*(If you plan to publish this add-on to a GitHub repository)*
-1. Go to **Settings > Add-ons > Add-on Store** in your Home Assistant UI.
-2. Click the three dots in the top right corner and select **Repositories**.
-3. Add the URL of your GitHub repository.
-4. Scroll down, find **HomeReader TTS**, and click **Install**.
-5. Click **Start** and toggle **Show in sidebar**.
+
+[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fmazillka%2Fha-homereader-tts-addon)
+
+1. Click the button above to add this repository to your Home Assistant instance.
+2. If the button doesn't work, go to **Settings > Add-ons > Add-on Store**.
+3. Click the three dots in the top right corner and select **Repositories**.
+4. Add the URL `https://github.com/mazillka/ha-homereader-tts-addon`.
+5. Scroll down, find **HomeReader TTS**, and click **Install**.
+6. Click **Start** and toggle **Show in sidebar**.
 
 ## Usage
 

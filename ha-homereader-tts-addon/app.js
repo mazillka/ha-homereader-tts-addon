@@ -144,10 +144,18 @@
     synth.onvoiceschanged = loadVoices;
   }
   loadVoices();
-  // Android WebView fallback: try loading voices after a short delay if it fails initially
-  setTimeout(() => {
-    if (voices.length === 0) loadVoices();
-  }, 500);
+  
+  // Android WebView fallback: poll for voices if they don't load immediately
+  let voicePollCount = 0;
+  function pollVoices() {
+    if (voices.length > 0) return; // Stop polling once loaded
+    loadVoices();
+    if (voices.length === 0 && voicePollCount < 20) {
+      voicePollCount++;
+      setTimeout(pollVoices, 250); // Poll every 250ms, up to 5 seconds
+    }
+  }
+  pollVoices();
 
   // ---- Helpers ----
   function getSelectedVoice() {

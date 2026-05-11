@@ -140,8 +140,14 @@
   }
 
   // Chrome needs this event; Firefox/Safari populate immediately
-  synth.onvoiceschanged = loadVoices;
+  if (synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = loadVoices;
+  }
   loadVoices();
+  // Android WebView fallback: try loading voices after a short delay if it fails initially
+  setTimeout(() => {
+    if (voices.length === 0) loadVoices();
+  }, 500);
 
   // ---- Helpers ----
   function getSelectedVoice() {
@@ -150,8 +156,10 @@
 
   function splitSentences(text) {
     // Split on sentence-ending punctuation while keeping the delimiter
+    // Use replace to avoid RegExp lookbehinds which crash older Android WebViews
     return text
-      .split(/(?<=[.!?…])\s+/)
+      .replace(/([.!?…])\s+/g, "$1\n")
+      .split(/\n/)
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
   }
@@ -165,7 +173,8 @@
     const allSentences = [];
     const structured = paragraphs.map((para) => {
       const sentences = para
-        .split(/(?<=[.!?…])\s+/)
+        .replace(/([.!?…])\s+/g, "$1\n")
+        .split(/\n/)
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
       // If no sentence-ending punctuation, treat the whole paragraph as one sentence

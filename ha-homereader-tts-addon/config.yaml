@@ -13,5 +13,5 @@ startup: application
 boot: auto
 ingress: true
 ingress_port: 8099
-panel_icon: mdi:text-to-speech
+panel_icon: "mdi:account-voice"
 panel_title: "HomeReader TTS"

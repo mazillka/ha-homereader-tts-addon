@@ -14,5 +14,4 @@ boot: auto
 ingress: true
 ingress_port: 8099
 panel_icon: mdi:text-to-speech
-panel_title: "HomeReader"
-image: local/ha-homereader-tts-addon
+panel_title: "HomeReader TTS"

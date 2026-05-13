@@ -28,141 +28,147 @@
 
     <!-- Main Content -->
     <main class="main-content">
-      <!-- Text Input Card -->
-      <section class="card card-elevated text-card" id="text-card">
-        <div class="card-header">
-          <h2 class="card-title">
-            <span class="material-symbols-rounded card-icon">edit_note</span>
-            Your Text
-          </h2>
-          <div class="char-count" id="char-count">0 characters</div>
-        </div>
-        <textarea id="text-input" class="text-input"
-          placeholder="Paste or type your text here… HomeReader will read it aloud with a natural voice." rows="8"
-          spellcheck="true" aria-label="Text to read aloud"></textarea>
-        <div class="text-actions">
-          <button class="btn btn-tonal" id="btn-clear" title="Clear text">
-            <span class="material-symbols-rounded">delete</span>
-            Clear
-          </button>
-          <button class="btn btn-tonal" id="btn-paste" title="Paste from clipboard">
-            <span class="material-symbols-rounded">content_paste</span>
-            Paste
-          </button>
-          <button class="btn btn-tonal" id="btn-import" title="Import text from file">
-            <span class="material-symbols-rounded">upload_file</span>
-            Import
-          </button>
-          <input type="file" id="file-input" accept=".txt,.md,.html,.htm,.csv,.srt,.sub,.vtt,.log,.json,.xml" hidden />
-          <button class="btn btn-tonal" id="btn-sample" title="Load sample text">
-            <span class="material-symbols-rounded">auto_stories</span>
-            Sample
-          </button>
-        </div>
+      <section style="grid-column: 1; grid-row: 1;">
+
+        <!-- Text Input Card -->
+        <section class="card card-elevated text-card" id="text-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="material-symbols-rounded card-icon">edit_note</span>
+              Your Text
+            </h2>
+            <div class="char-count" id="char-count">0 characters</div>
+          </div>
+          <textarea id="text-input" class="text-input"
+            placeholder="Paste or type your text here… HomeReader will read it aloud with a natural voice." rows="8"
+            spellcheck="true" aria-label="Text to read aloud"></textarea>
+          <div class="text-actions">
+            <button class="btn btn-tonal" id="btn-clear" title="Clear text">
+              <span class="material-symbols-rounded">delete</span>
+              Clear
+            </button>
+            <button class="btn btn-tonal" id="btn-paste" title="Paste from clipboard">
+              <span class="material-symbols-rounded">content_paste</span>
+              Paste
+            </button>
+            <button class="btn btn-tonal" id="btn-import" title="Import text from file">
+              <span class="material-symbols-rounded">upload_file</span>
+              Import
+            </button>
+            <input type="file" id="file-input" accept=".txt,.md,.html,.htm,.csv,.srt,.sub,.vtt,.log,.json,.xml"
+              hidden />
+            <button class="btn btn-tonal" id="btn-sample" title="Load sample text">
+              <span class="material-symbols-rounded">auto_stories</span>
+              Sample
+            </button>
+          </div>
+        </section>
+
+        <!-- Reading Preview -->
+        <section class="card card-elevated reading-card" id="reading-card" style="display:none;">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="material-symbols-rounded card-icon">visibility</span>
+              Reading Progress
+            </h2>
+          </div>
+          <div class="reading-preview" id="reading-preview">
+            <!-- sentence spans injected by JS -->
+          </div>
+        </section>
       </section>
 
-      <!-- Reading Preview -->
-      <section class="card card-elevated reading-card" id="reading-card" style="display:none;">
-        <div class="card-header">
-          <h2 class="card-title">
-            <span class="material-symbols-rounded card-icon">visibility</span>
-            Reading Progress
-          </h2>
-        </div>
-        <div class="reading-preview" id="reading-preview">
-          <!-- sentence spans injected by JS -->
-        </div>
-      </section>
-
-      <!-- Voice Settings Card -->
-      <section class="card card-elevated settings-card" id="settings-card">
-        <div class="card-header">
-          <h2 class="card-title">
-            <span class="material-symbols-rounded card-icon">tune</span>
-            Voice Settings
-          </h2>
-        </div>
-
-        <div class="settings-grid">
-          <!-- Voice Select -->
-          <div class="setting-group voice-select-group">
-            <label for="voice-select" class="setting-label">Voice</label>
-            <div class="select-wrapper">
-              <select id="voice-select" class="select-input" aria-label="Select a voice">
-                <option value="">Loading voices…</option>
-              </select>
-              <span class="material-symbols-rounded select-chevron">expand_more</span>
-            </div>
+      <section style="grid-column: 2; grid-row: 1;">
+        <!-- Voice Settings Card -->
+        <section class="card card-elevated settings-card" id="settings-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="material-symbols-rounded card-icon">tune</span>
+              Voice Settings
+            </h2>
           </div>
 
-          <!-- Rate -->
-          <div class="setting-group">
-            <div class="setting-label-row">
-              <label for="rate-slider" class="setting-label">Speed</label>
-              <span class="setting-value" id="rate-value">1.0×</span>
+          <div class="settings-grid">
+            <!-- Voice Select -->
+            <div class="setting-group voice-select-group">
+              <label for="voice-select" class="setting-label">Voice</label>
+              <div class="select-wrapper">
+                <select id="voice-select" class="select-input" aria-label="Select a voice">
+                  <option value="">Loading voices…</option>
+                </select>
+                <span class="material-symbols-rounded select-chevron">expand_more</span>
+              </div>
             </div>
-            <input type="range" id="rate-slider" class="slider" min="0.25" max="3" step="0.05" value="1"
-              aria-label="Speech rate" />
+
+            <!-- Rate -->
+            <div class="setting-group">
+              <div class="setting-label-row">
+                <label for="rate-slider" class="setting-label">Speed</label>
+                <span class="setting-value" id="rate-value">1.0×</span>
+              </div>
+              <input type="range" id="rate-slider" class="slider" min="0.25" max="3" step="0.05" value="1"
+                aria-label="Speech rate" />
+            </div>
+
+            <!-- Pitch -->
+            <div class="setting-group">
+              <div class="setting-label-row">
+                <label for="pitch-slider" class="setting-label">Pitch</label>
+                <span class="setting-value" id="pitch-value">1.0</span>
+              </div>
+              <input type="range" id="pitch-slider" class="slider" min="0" max="2" step="0.05" value="1"
+                aria-label="Speech pitch" />
+            </div>
+
+            <!-- Volume -->
+            <div class="setting-group">
+              <div class="setting-label-row">
+                <label for="volume-slider" class="setting-label">Volume</label>
+                <span class="setting-value" id="volume-value">100%</span>
+              </div>
+              <input type="range" id="volume-slider" class="slider" min="0" max="1" step="0.05" value="1"
+                aria-label="Speech volume" />
+            </div>
+          </div>
+        </section>
+
+        <!-- Playback Controls -->
+        <section class="card card-elevated controls-bar" id="controls-bar">
+          <!-- Progress -->
+          <div class="progress-container" id="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+          <div class="progress-info">
+            <span class="progress-text" id="progress-text">Ready</span>
+            <span class="progress-counter" id="progress-counter"></span>
           </div>
 
-          <!-- Pitch -->
-          <div class="setting-group">
-            <div class="setting-label-row">
-              <label for="pitch-slider" class="setting-label">Pitch</label>
-              <span class="setting-value" id="pitch-value">1.0</span>
-            </div>
-            <input type="range" id="pitch-slider" class="slider" min="0" max="2" step="0.05" value="1"
-              aria-label="Speech pitch" />
+          <div class="controls-row">
+            <button class="btn btn-icon" id="btn-stop" title="Stop" aria-label="Stop">
+              <span class="material-symbols-rounded">stop</span>
+            </button>
+
+            <button class="btn btn-fab" id="btn-play" title="Play" aria-label="Play">
+              <span class="material-symbols-rounded" id="play-icon">play_arrow</span>
+              <span class="material-symbols-rounded" id="pause-icon" style="display:none;">pause</span>
+            </button>
+
+            <button class="btn btn-icon" id="btn-skip" title="Skip to next sentence" aria-label="Skip sentence">
+              <span class="material-symbols-rounded">skip_next</span>
+            </button>
           </div>
+        </section>
 
-          <!-- Volume -->
-          <div class="setting-group">
-            <div class="setting-label-row">
-              <label for="volume-slider" class="setting-label">Volume</label>
-              <span class="setting-value" id="volume-value">100%</span>
-            </div>
-            <input type="range" id="volume-slider" class="slider" min="0" max="1" step="0.05" value="1"
-              aria-label="Speech volume" />
+        <!-- Waveform Visualizer -->
+        <section class="card card-elevated visualizer-card" id="visualizer-card">
+          <div class="waveform" id="waveform" aria-hidden="true">
+            <!-- bars injected by JS -->
           </div>
-        </div>
-      </section>
-
-      <!-- Playback Controls -->
-      <section class="card card-elevated controls-bar" id="controls-bar">
-        <!-- Progress -->
-        <div class="progress-container" id="progress-container">
-          <div class="progress-bar" id="progress-bar"></div>
-        </div>
-        <div class="progress-info">
-          <span class="progress-text" id="progress-text">Ready</span>
-          <span class="progress-counter" id="progress-counter"></span>
-        </div>
-
-        <div class="controls-row">
-          <button class="btn btn-icon" id="btn-stop" title="Stop" aria-label="Stop">
-            <span class="material-symbols-rounded">stop</span>
-          </button>
-
-          <button class="btn btn-fab" id="btn-play" title="Play" aria-label="Play">
-            <span class="material-symbols-rounded" id="play-icon">play_arrow</span>
-            <span class="material-symbols-rounded" id="pause-icon" style="display:none;">pause</span>
-          </button>
-
-          <button class="btn btn-icon" id="btn-skip" title="Skip to next sentence" aria-label="Skip sentence">
-            <span class="material-symbols-rounded">skip_next</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Waveform Visualizer -->
-      <section class="card card-elevated visualizer-card" id="visualizer-card">
-        <div class="waveform" id="waveform" aria-hidden="true">
-          <!-- bars injected by JS -->
-        </div>
+        </section>
       </section>
     </main>
 
-  <script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 
 </html>

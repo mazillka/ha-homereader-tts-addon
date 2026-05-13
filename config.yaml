@@ -1,6 +1,6 @@
 name: "HomeReader TTS"
 description: "A beautiful, browser-based text-to-speech addon that reads your text aloud with natural-sounding voices. Adjust speed, pitch, and volume for the perfect listening experience."
-version: "2026.5.11"
+version: "2026.5.12"
 image: "mazillka/ha-homereader-tts-addon"
 slug: "ha-homereader-tts-addon"
 
@@ -9,8 +9,8 @@ arch:
   - amd64
 
 startup: application
-
 boot: auto
+
 ingress: true
 ingress_port: 8099
 

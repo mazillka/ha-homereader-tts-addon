@@ -596,15 +596,6 @@ body {
   50%      { height: var(--max-h, 40px); opacity: 0.85; }
 }
 
-/* ---------- Footer ---------- */
-.app-footer {
-  text-align: center;
-  padding: 1.5rem 0 0.5rem;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.75rem;
-  letter-spacing: 0.02em;
-}
-
 /* ---------- Toast (MD3 Snackbar) ---------- */
 .toast {
   position: fixed;

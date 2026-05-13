@@ -28,10 +28,15 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload only src folder
+      - name: Stage site content from src
+        run: |
+          mkdir -p _site
+          cp -R src/. _site/
+
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './src'
+          path: './_site'
 
       - name: Deploy to GitHub Pages
         id: deployment

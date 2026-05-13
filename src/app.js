@@ -29,16 +29,19 @@
   const progressText = document.getElementById("progress-text");
   const progressCounter = document.getElementById("progress-counter");
   const waveformEl = document.getElementById("waveform");
-  const readingCard = document.getElementById("reading-card");
-  const readingPreview = document.getElementById("reading-preview");
 
   // ---- State ----
   const synth = window.speechSynthesis;
   let voices = [];
-  let utterances = []; // array of SpeechSynthesisUtterance (one per sentence)
+  let utterances = []; // array of { utterance, start, end }
   let currentIndex = 0;
   let isSpeaking = false;
   let isPaused = false;
+  let savedSelection = null;
+  let textareaMeasure = null;
+  let activeProgressRange = null;
+  let isRestoringLockedSelection = false;
+  let lockedSelectionRestoreQueued = false;
 
   // ---- Sample Texts ----
   const sampleTexts = [
@@ -197,6 +200,209 @@
     return { paragraphs: structured, allSentences };
   }
 
+  function getSentenceProgressData(text) {
+    const paragraphs = text
+      .split(/\n\s*\n|\n/)
+      .filter((p) => p.trim().length > 0);
+    const allSentences = [];
+    let paragraphSearchStart = 0;
+
+    paragraphs.forEach((para) => {
+      const paragraphStart = text.indexOf(para, paragraphSearchStart);
+      if (paragraphStart === -1) return;
+      paragraphSearchStart = paragraphStart + para.length;
+
+      const sentences = para
+        .replace(/([.!?â€¦])\s+/g, "$1\n")
+        .split(/\n/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+      const resolved = sentences.length > 0 ? sentences : [para.trim()];
+      let sentenceSearchStart = paragraphStart;
+
+      resolved.forEach((sentence) => {
+        const start = text.indexOf(sentence, sentenceSearchStart);
+        if (start === -1) return;
+
+        const end = start + sentence.length;
+        sentenceSearchStart = end;
+        allSentences.push({ text: sentence, start, end });
+      });
+    });
+
+    return allSentences;
+  }
+
+  function setTextLocked(locked) {
+    textInput.readOnly = locked;
+    textInput.classList.toggle("is-locked", locked);
+    textInput.setAttribute("aria-readonly", String(locked));
+
+    btnClear.disabled = locked;
+    btnPaste.disabled = locked;
+    btnImport.disabled = locked;
+    btnSample.disabled = locked;
+  }
+
+  function focusProgressRange(start, end) {
+    activeProgressRange = { start, end };
+    textInput.focus({ preventScroll: true });
+    textInput.setSelectionRange(start, end, "forward");
+    scrollRangeIntoView(start, end);
+  }
+
+  function hasLockedProgressRange() {
+    return textInput.readOnly && activeProgressRange && (isSpeaking || isPaused);
+  }
+
+  function restoreLockedProgressRange() {
+    if (!hasLockedProgressRange() || isRestoringLockedSelection) return;
+
+    const { start, end } = activeProgressRange;
+    if (textInput.selectionStart === start && textInput.selectionEnd === end) return;
+
+    isRestoringLockedSelection = true;
+    textInput.focus({ preventScroll: true });
+    textInput.setSelectionRange(start, end, "forward");
+    scrollRangeIntoView(start, end);
+    requestAnimationFrame(() => {
+      isRestoringLockedSelection = false;
+    });
+  }
+
+  function scheduleLockedProgressRangeRestore() {
+    if (!hasLockedProgressRange() || lockedSelectionRestoreQueued) return;
+
+    lockedSelectionRestoreQueued = true;
+    requestAnimationFrame(() => {
+      lockedSelectionRestoreQueued = false;
+      restoreLockedProgressRange();
+    });
+  }
+
+  function getTextareaMeasure() {
+    if (textareaMeasure) return textareaMeasure;
+
+    textareaMeasure = document.createElement("div");
+    textareaMeasure.setAttribute("aria-hidden", "true");
+    textareaMeasure.style.position = "absolute";
+    textareaMeasure.style.visibility = "hidden";
+    textareaMeasure.style.pointerEvents = "none";
+    textareaMeasure.style.left = "-9999px";
+    textareaMeasure.style.top = "0";
+    textareaMeasure.style.whiteSpace = "pre-wrap";
+    textareaMeasure.style.overflowWrap = "break-word";
+    textareaMeasure.style.wordWrap = "break-word";
+    textareaMeasure.style.overflow = "hidden";
+    document.body.appendChild(textareaMeasure);
+
+    return textareaMeasure;
+  }
+
+  function syncTextareaMeasureStyles() {
+    const styles = window.getComputedStyle(textInput);
+    const measure = getTextareaMeasure();
+    const props = [
+      "boxSizing",
+      "width",
+      "paddingTop",
+      "paddingRight",
+      "paddingBottom",
+      "paddingLeft",
+      "borderTopWidth",
+      "borderRightWidth",
+      "borderBottomWidth",
+      "borderLeftWidth",
+      "fontFamily",
+      "fontSize",
+      "fontWeight",
+      "fontStyle",
+      "fontVariant",
+      "fontStretch",
+      "lineHeight",
+      "letterSpacing",
+      "textTransform",
+      "textIndent",
+      "textAlign",
+      "tabSize",
+    ];
+
+    props.forEach((prop) => {
+      measure.style[prop] = styles[prop];
+    });
+
+    measure.style.borderStyle = "solid";
+    measure.style.height = "auto";
+  }
+
+  function getRangeVerticalPosition(start, end) {
+    syncTextareaMeasureStyles();
+
+    const measure = getTextareaMeasure();
+    const before = document.createTextNode(textInput.value.slice(0, start));
+    const active = document.createElement("span");
+    const after = document.createTextNode(textInput.value.slice(end));
+
+    active.textContent = textInput.value.slice(start, end) || "\u200b";
+
+    measure.replaceChildren(before, active, after);
+
+    return {
+      top: active.offsetTop,
+      bottom: active.offsetTop + active.offsetHeight,
+    };
+  }
+
+  function scrollRangeIntoView(start, end) {
+    const { top, bottom } = getRangeVerticalPosition(start, end);
+    const currentTop = textInput.scrollTop;
+    const currentBottom = currentTop + textInput.clientHeight;
+    const margin = Math.max(24, textInput.clientHeight * 0.18);
+
+    if (top >= currentTop + margin && bottom <= currentBottom - margin) {
+      return;
+    }
+
+    const targetTop = Math.max(0, top - textInput.clientHeight * 0.35);
+    textInput.scrollTo({
+      top: targetTop,
+      behavior: "smooth",
+    });
+  }
+
+  function getSentenceProgressRanges(text) {
+    const paragraphs = text
+      .split(/\n\s*\n|\n/)
+      .filter((p) => p.trim().length > 0);
+    const allSentences = [];
+    let paragraphSearchStart = 0;
+
+    paragraphs.forEach((para) => {
+      const paragraphStart = text.indexOf(para, paragraphSearchStart);
+      if (paragraphStart === -1) return;
+      paragraphSearchStart = paragraphStart + para.length;
+
+      const sentences = para
+        .replace(/([.!?\u2026])\s+/g, "$1\n")
+        .split(/\n/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+      const resolved = sentences.length > 0 ? sentences : [para.trim()];
+      let sentenceSearchStart = paragraphStart;
+
+      resolved.forEach((sentence) => {
+        const start = text.indexOf(sentence, sentenceSearchStart);
+        if (start === -1) return;
+
+        const end = start + sentence.length;
+        sentenceSearchStart = end;
+        allSentences.push({ text: sentence, start, end });
+      });
+    });
+
+    return allSentences;
+  }
+
   function updateUI(state) {
     // state: 'idle' | 'speaking' | 'paused'
     if (state === "speaking") {
@@ -205,13 +411,14 @@
       btnPlay.classList.add("speaking");
       waveformEl.classList.add("active");
       progressText.textContent = "Speaking…";
-      readingCard.style.display = "";
+      setTextLocked(true);
     } else if (state === "paused") {
       playIcon.style.display = "block";
       pauseIcon.style.display = "none";
       btnPlay.classList.remove("speaking");
       waveformEl.classList.remove("active");
       progressText.textContent = "Paused";
+      setTextLocked(true);
     } else {
       playIcon.style.display = "block";
       pauseIcon.style.display = "none";
@@ -220,8 +427,15 @@
       progressBar.style.width = "0%";
       progressText.textContent = "Ready";
       progressCounter.textContent = "";
-      readingCard.style.display = "none";
-      readingPreview.innerHTML = "";
+      setTextLocked(false);
+      activeProgressRange = null;
+
+      if (savedSelection) {
+        textInput.setSelectionRange(savedSelection.start, savedSelection.end, savedSelection.direction);
+        savedSelection = null;
+      } else {
+        textInput.setSelectionRange(0, 0);
+      }
     }
   }
 
@@ -243,60 +457,28 @@
 
     stopSpeech();
 
-    const { paragraphs, allSentences } = splitTextStructured(text);
-    utterances = allSentences.map((s) => {
-      const utt = new SpeechSynthesisUtterance(s);
+    savedSelection = {
+      start: textInput.selectionStart,
+      end: textInput.selectionEnd,
+      direction: textInput.selectionDirection || "none",
+    };
+
+    const allSentences = getSentenceProgressRanges(textInput.value);
+    utterances = allSentences.map((sentence) => {
+      const utt = new SpeechSynthesisUtterance(sentence.text);
       utt.voice = getSelectedVoice();
       utt.rate = parseFloat(rateSlider.value);
       utt.pitch = parseFloat(pitchSlider.value);
       utt.volume = parseFloat(volumeSlider.value);
-      return utt;
+      return { utterance: utt, start: sentence.start, end: sentence.end };
     });
 
     currentIndex = 0;
     isSpeaking = true;
     isPaused = false;
 
-    // Build reading preview preserving paragraph structure
-    buildReadingPreview(paragraphs);
-
     updateUI("speaking");
     speakNext();
-  }
-
-  // ---- Reading Preview ----
-  function buildReadingPreview(paragraphs) {
-    readingPreview.innerHTML = "";
-    paragraphs.forEach((para) => {
-      const div = document.createElement("div");
-      div.className = "preview-paragraph";
-      para.sentences.forEach((s) => {
-        const span = document.createElement("span");
-        span.className = "sentence";
-        span.dataset.index = s.globalIndex;
-        span.textContent = s.text + " ";
-        div.appendChild(span);
-      });
-      readingPreview.appendChild(div);
-    });
-  }
-
-  function highlightSentence(index) {
-    const spans = readingPreview.querySelectorAll(".sentence");
-    spans.forEach((span, i) => {
-      span.classList.remove("active");
-      if (i < index) {
-        span.classList.add("spoken");
-      } else if (i === index) {
-        span.classList.add("active");
-        // Auto-scroll to keep active sentence visible
-        const container = readingPreview;
-        const top = span.offsetTop - container.offsetTop;
-        container.scrollTo({ top: top - 40, behavior: "smooth" });
-      } else {
-        span.classList.remove("spoken");
-      }
-    });
   }
 
   function speakNext() {
@@ -309,11 +491,12 @@
       return;
     }
 
-    const utt = utterances[currentIndex];
+    const current = utterances[currentIndex];
+    const utt = current.utterance;
 
     utt.onstart = () => {
       updateProgress();
-      highlightSentence(currentIndex);
+      focusProgressRange(current.start, current.end);
     };
 
     utt.onend = () => {
@@ -371,10 +554,10 @@
     
     // Update all existing utterances with the new settings
     for (let i = currentIndex; i < utterances.length; i++) {
-      utterances[i].voice = voice;
-      utterances[i].rate = rate;
-      utterances[i].pitch = pitch;
-      utterances[i].volume = volume;
+      utterances[i].utterance.voice = voice;
+      utterances[i].utterance.rate = rate;
+      utterances[i].utterance.pitch = pitch;
+      utterances[i].utterance.volume = volume;
     }
   }
 
@@ -507,6 +690,34 @@
     charCount.textContent = `${len.toLocaleString()} character${len !== 1 ? "s" : ""}`;
   });
 
+  textInput.addEventListener("select", () => {
+    restoreLockedProgressRange();
+  });
+
+  textInput.addEventListener("mouseup", () => {
+    restoreLockedProgressRange();
+  });
+
+  textInput.addEventListener("touchend", () => {
+    restoreLockedProgressRange();
+  });
+
+  textInput.addEventListener("keyup", () => {
+    restoreLockedProgressRange();
+  });
+
+  textInput.addEventListener("focus", () => {
+    restoreLockedProgressRange();
+  });
+
+  textInput.addEventListener("blur", () => {
+    scheduleLockedProgressRangeRestore();
+  });
+
+  document.addEventListener("pointerup", () => {
+    scheduleLockedProgressRangeRestore();
+  });
+
   // Slider labels
   rateSlider.addEventListener("input", () => {
     rateValue.textContent = `${parseFloat(rateSlider.value).toFixed(1)}×`;
@@ -551,7 +762,6 @@
   }
 
   // Hook keep-alive into speech lifecycle
-  const origSpeakAll = speakAll;
   // We attach keep-alive via MutationObserver on the play button
   const observer = new MutationObserver(() => {
     if (btnPlay.classList.contains("speaking")) {

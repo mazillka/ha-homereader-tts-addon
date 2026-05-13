@@ -192,7 +192,7 @@ body {
   color: var(--md-sys-color-on-surface);
   line-height: 1.6;
   resize: vertical;
-  min-height: 140px;
+  min-height: 426px;
   transition: border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
     box-shadow var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
 }
